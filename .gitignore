@@ -1,0 +1,118 @@
+# Common Git ignore for Node + Flutter + Android + general files
+
+# Node
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+package-lock.json
+.pnpm-debug.log*
+
+# Env files & secrets
+.env
+.env.*
+.env.local
+.env.development
+.env.test
+.env.production
+*.key
+*.pem
+*.p12
+*.jks
+*.keystore
+credentials.json
+serviceAccount*.json
+firebase-debug.log
+
+# Firebase / Google services
+google-services.json
+**/google-services.json
+GoogleService-Info.plist
+**/GoogleService-Info.plist
+
+# Prisma
+prisma/.env
+# Keep migrations (optional) - remove if you want to ignore migration files
+# prisma/migrations/
+
+# Build outputs
+/build
+/dist
+/.next
+/.expo
+/public/build
+
+# Flutter / Dart
+**/build/
+.flutter-plugins
+.flutter-plugins-dependencies
+.flutter-plugins-deps
+.flutter-plugins-*.json
+.packages
+.pub-cache/
+.pub/
+.dart_tool/
+ios/Pods/
+pubspec.lock
+
+# Android
+**/.gradle/
+**/local.properties
+**/android/key.properties
+**/android/*.keystore
+*.keystore
+*.jks
+app/debug.keystore
+.gradle/
+/captures/
+
+# iOS
+*.xcworkspace
+xcuserdata/
+DerivedData/
+build/
+
+# Logs
+logs
+*.log
+npm-debug.log*
+
+# IDEs and editors
+.vscode/
+*.sublime-workspace
+*.sublime-project
+.idea/
+*.iml
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Uploads / user data
+uploads/
+**/uploads/
+media/
+**/media/
+
+# OneDrive / backup files
+~$*
+*.lnk
+
+# Misc
+coverage/
+reports/
+*.tmp
+
+# Ensure sensitive filenames are excluded globally
+*.env.local
+*.env.*.local
+
+# Project-specific folders
+ui-prototype/
+redmwfile/
+
+# Ignore Markdown files
+*.md
+
+# End of .gitignore

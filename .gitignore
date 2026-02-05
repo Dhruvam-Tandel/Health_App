@@ -22,6 +22,7 @@ package-lock.json
 *.keystore
 credentials.json
 serviceAccount*.json
+firebase-service-account.json
 firebase-debug.log
 
 # Firebase / Google services

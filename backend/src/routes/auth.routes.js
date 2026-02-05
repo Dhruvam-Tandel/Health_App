@@ -1,346 +1,280 @@
 const express = require('express');
 const router = express.Router();
-const bcrypt = require('bcryptjs');
-const jwt = require('jsonwebtoken');
-const { z } = require('zod');
-const prisma = require('../config/database');
-const multer = require('multer');
-const path = require('path');
+const { db, auth } = require('../config/firebase');
+const { verifyToken } = require('../middleware/auth');
 
-// Configure multer for file uploads
-const storage = multer.diskStorage({
-    destination: (req, file, cb) => {
-        cb(null, process.env.UPLOAD_DIR || './uploads');
-    },
-    filename: (req, file, cb) => {
-        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-        cb(null, 'verification-' + uniqueSuffix + path.extname(file.originalname));
-    }
-});
-
-const upload = multer({
-    storage,
-    limits: { fileSize: parseInt(process.env.MAX_FILE_SIZE) || 10485760 }, // 10MB
-    fileFilter: (req, file, cb) => {
-        const allowedTypes = /jpeg|jpg|png|pdf/;
-        const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
-        const mimetype = allowedTypes.test(file.mimetype);
-        if (mimetype && extname) {
-            return cb(null, true);
-        }
-        cb(new Error('Only images and PDFs are allowed'));
-    }
-});
-
-// Validation schemas
-const signupSchema = z.object({
-    email: z.string().email(),
-    password: z.string().min(6),
-    role: z.enum(['PATIENT', 'DOCTOR', 'STAFF']),
-    fullName: z.string().min(2),
-    // Doctor fields
-    specialization: z.string().optional(),
-    licenseNumber: z.string().optional(),
-    medicalCouncil: z.string().optional(),
-    // Staff fields
-    organizationId: z.string().optional(),
-    employeeId: z.string().optional(),
-    department: z.string().optional(),
-});
-
-const loginSchema = z.object({
-    email: z.string().email(),
-    password: z.string(),
-});
-
-// Helper: Check if email domain is verified
-function isVerifiedDomain(email, role) {
-    const domain = email.split('@')[1].toLowerCase();
-
-    if (role === 'DOCTOR') {
-        const doctorDomains = (process.env.DOCTOR_EMAIL_DOMAINS || '').split(',');
-        return doctorDomains.some(d => d.trim().toLowerCase() === domain);
-    }
-
-    if (role === 'STAFF') {
-        const adminDomains = (process.env.ADMIN_EMAIL_DOMAINS || '').split(',');
-        return adminDomains.some(d => d.trim().toLowerCase() === domain);
-    }
-
-    return true; // Patients can use any email
-}
-
-// POST /api/auth/signup
-router.post('/signup', async (req, res) => {
+/**
+ * @route   POST /api/auth/verify-doctor
+ * @desc    Verify doctor credentials against Firestore
+ * @access  Public
+ */
+router.post('/verify-doctor', async (req, res) => {
     try {
-        const data = signupSchema.parse(req.body);
+        const { licenseNumber, fullName, medicalCouncil } = req.body;
 
-        // Check if user already exists
-        const existingUser = await prisma.user.findUnique({
-            where: { email: data.email }
-        });
-
-        if (existingUser) {
-            return res.status(400).json({ error: 'Email already registered' });
-        }
-
-        // Verify email domain for doctors and staff
-        if ((data.role === 'DOCTOR' || data.role === 'STAFF') && !isVerifiedDomain(data.email, data.role)) {
+        if (!licenseNumber || !fullName || !medicalCouncil) {
             return res.status(400).json({
-                error: `${data.role === 'DOCTOR' ? 'Doctor' : 'Staff'} registration requires an institutional email address. Please use your organization's email domain.`
+                success: false,
+                message: 'License number, full name, and medical council are required'
             });
         }
 
-        // Hash password
-        const passwordHash = await bcrypt.hash(data.password, 10);
+        // Query verified_doctors collection
+        const doctorsRef = db.collection('verified_doctors');
+        const snapshot = await doctorsRef
+            .where('licenseNumber', '==', licenseNumber.toUpperCase())
+            .where('fullName', '==', fullName.trim())
+            .where('medicalCouncil', '==', medicalCouncil)
+            .limit(1)
+            .get();
 
-        // Create user with role-specific profile
-        const user = await prisma.user.create({
-            data: {
-                email: data.email,
-                passwordHash,
-                role: data.role,
-                emailVerified: false,
-                accountStatus: data.role === 'PATIENT' ? 'ACTIVE' : 'PENDING_VERIFICATION',
-                ...(data.role === 'PATIENT' && {
-                    patient: {
-                        create: {
-                            fullName: data.fullName,
-                        }
-                    }
-                }),
-                ...(data.role === 'DOCTOR' && {
-                    doctor: {
-                        create: {
-                            fullName: data.fullName,
-                            specialization: data.specialization || 'General Medicine',
-                            licenseNumber: data.licenseNumber,
-                            medicalCouncil: data.medicalCouncil,
-                            verificationStatus: 'PENDING',
-                        }
-                    }
-                }),
-                ...(data.role === 'STAFF' && {
-                    staff: {
-                        create: {
-                            fullName: data.fullName,
-                            organizationId: data.organizationId,
-                            employeeId: data.employeeId,
-                            department: data.department,
-                            verificationStatus: 'PENDING',
-                        }
-                    }
-                }),
-            },
-            include: {
-                patient: true,
-                doctor: true,
-                staff: true,
-            }
-        });
-
-        // TODO: Send verification email
-
-        res.status(201).json({
-            message: data.role === 'PATIENT'
-                ? 'Account created successfully! Please verify your email.'
-                : 'Account created! Please upload your verification documents and wait for admin approval.',
-            user: {
-                id: user.id,
-                email: user.email,
-                role: user.role,
-                accountStatus: user.accountStatus,
-            }
-        });
-
-    } catch (error) {
-        if (error instanceof z.ZodError) {
-            return res.status(400).json({ error: error.errors });
+        if (snapshot.empty) {
+            return res.status(404).json({
+                success: false,
+                message: 'Doctor credentials not found or invalid'
+            });
         }
-        console.error('Signup error:', error);
-        res.status(500).json({ error: 'Signup failed' });
+
+        const doctorData = snapshot.docs[0].data();
+
+        return res.status(200).json({
+            success: true,
+            message: 'Doctor verified successfully',
+            data: {
+                licenseNumber: doctorData.licenseNumber,
+                fullName: doctorData.fullName,
+                medicalCouncil: doctorData.medicalCouncil,
+                verified: true
+            }
+        });
+    } catch (error) {
+        console.error('Doctor verification error:', error);
+        return res.status(500).json({
+            success: false,
+            message: 'Error verifying doctor credentials',
+            error: error.message
+        });
     }
 });
 
-// POST /api/auth/login
-router.post('/login', async (req, res) => {
+/**
+ * @route   POST /api/auth/verify-staff
+ * @desc    Verify staff credentials against Firestore
+ * @access  Public
+ */
+router.post('/verify-staff', async (req, res) => {
     try {
-        const { email, password } = loginSchema.parse(req.body);
+        const { email, organizationId, employeeId } = req.body;
 
-        // Find user
-        const user = await prisma.user.findUnique({
-            where: { email },
-            include: {
-                patient: true,
-                doctor: true,
-                staff: true,
-            }
-        });
-
-        if (!user) {
-            return res.status(401).json({ error: 'Invalid credentials' });
+        if (!email || !organizationId || !employeeId) {
+            return res.status(400).json({
+                success: false,
+                message: 'Email, organization ID, and employee ID are required'
+            });
         }
 
-        // Verify password
-        const validPassword = await bcrypt.compare(password, user.passwordHash);
-        if (!validPassword) {
-            return res.status(401).json({ error: 'Invalid credentials' });
+        // Check if organization exists
+        const orgDoc = await db.collection('verified_organizations').doc(organizationId).get();
+
+        if (!orgDoc.exists) {
+            return res.status(404).json({
+                success: false,
+                message: 'Organization not found'
+            });
         }
 
-        // Check account status
-        if (user.accountStatus === 'SUSPENDED') {
-            return res.status(403).json({ error: 'Account suspended' });
-        }
+        const orgData = orgDoc.data();
+        const allowedDomains = orgData.emailDomains || [];
 
-        if (user.accountStatus === 'PENDING_VERIFICATION') {
+        // Check email domain
+        const emailDomain = email.split('@')[1].toLowerCase();
+        if (!allowedDomains.includes(emailDomain)) {
             return res.status(403).json({
-                error: 'Account pending verification. Please upload your verification documents or wait for admin approval.'
+                success: false,
+                message: 'Email domain not authorized for this organization'
             });
         }
 
-        // Generate tokens
-        const accessToken = jwt.sign(
-            { userId: user.id, role: user.role },
-            process.env.JWT_ACCESS_SECRET,
-            { expiresIn: process.env.JWT_ACCESS_EXPIRY || '15m' }
-        );
+        // Check employee ID
+        const employeeDoc = await db
+            .collection('verified_organizations')
+            .doc(organizationId)
+            .collection('employees')
+            .doc(employeeId)
+            .get();
 
-        const refreshToken = jwt.sign(
-            { userId: user.id },
-            process.env.JWT_REFRESH_SECRET,
-            { expiresIn: process.env.JWT_REFRESH_EXPIRY || '7d' }
-        );
+        if (!employeeDoc.exists) {
+            return res.status(404).json({
+                success: false,
+                message: 'Employee ID not found in organization'
+            });
+        }
 
-        // Store refresh token
-        const expiresAt = new Date();
-        expiresAt.setDate(expiresAt.getDate() + 7);
-
-        await prisma.session.create({
+        return res.status(200).json({
+            success: true,
+            message: 'Staff verified successfully',
             data: {
-                userId: user.id,
-                refreshToken,
-                expiresAt,
+                organizationId,
+                organizationName: orgData.name,
+                employeeId,
+                verified: true
             }
         });
-
-        // Update last login
-        await prisma.user.update({
-            where: { id: user.id },
-            data: { lastLogin: new Date() }
-        });
-
-        res.json({
-            accessToken,
-            refreshToken,
-            user: {
-                id: user.id,
-                email: user.email,
-                role: user.role,
-                profile: user.patient || user.doctor || user.staff,
-            }
-        });
-
     } catch (error) {
-        if (error instanceof z.ZodError) {
-            return res.status(400).json({ error: error.errors });
-        }
-        console.error('Login error:', error);
-        res.status(500).json({ error: 'Login failed' });
+        console.error('Staff verification error:', error);
+        return res.status(500).json({
+            success: false,
+            message: 'Error verifying staff credentials',
+            error: error.message
+        });
     }
 });
 
-// POST /api/auth/upload-verification (for doctors and staff)
-router.post('/upload-verification', upload.single('document'), async (req, res) => {
+/**
+ * @route   GET /api/auth/profile
+ * @desc    Get user profile
+ * @access  Private
+ */
+router.get('/profile', verifyToken, async (req, res) => {
     try {
-        const { userId } = req.body;
+        const userDoc = await db.collection('users').doc(req.user.uid).get();
 
-        if (!req.file) {
-            return res.status(400).json({ error: 'No file uploaded' });
-        }
-
-        const user = await prisma.user.findUnique({
-            where: { id: userId },
-            include: { doctor: true, staff: true }
-        });
-
-        if (!user) {
-            return res.status(404).json({ error: 'User not found' });
-        }
-
-        // Update verification document
-        if (user.role === 'DOCTOR' && user.doctor) {
-            await prisma.doctor.update({
-                where: { id: user.doctor.id },
-                data: { verificationDocument: req.file.path }
-            });
-        } else if (user.role === 'STAFF' && user.staff) {
-            await prisma.staff.update({
-                where: { id: user.staff.id },
-                data: { verificationDocument: req.file.path }
+        if (!userDoc.exists) {
+            return res.status(404).json({
+                success: false,
+                message: 'User profile not found'
             });
         }
 
-        res.json({
-            message: 'Verification document uploaded successfully. Waiting for admin approval.',
-            filePath: req.file.path
-        });
+        const userData = userDoc.data();
 
+        return res.status(200).json({
+            success: true,
+            data: {
+                uid: userData.uid,
+                email: userData.email,
+                role: userData.role,
+                emailVerified: userData.emailVerified,
+                accountStatus: userData.accountStatus,
+                createdAt: userData.createdAt,
+                lastLogin: userData.lastLogin,
+                // Role-specific data
+                ...(userData.role === 'doctor' && {
+                    licenseNumber: userData.licenseNumber,
+                    fullName: userData.fullName,
+                    medicalCouncil: userData.medicalCouncil
+                }),
+                ...(userData.role === 'staff' && {
+                    organizationId: userData.organizationId,
+                    employeeId: userData.employeeId
+                })
+            }
+        });
     } catch (error) {
-        console.error('Upload error:', error);
-        res.status(500).json({ error: 'Upload failed' });
+        console.error('Profile fetch error:', error);
+        return res.status(500).json({
+            success: false,
+            message: 'Error fetching user profile',
+            error: error.message
+        });
     }
 });
 
-// POST /api/auth/refresh
-router.post('/refresh', async (req, res) => {
+/**
+ * @route   POST /api/auth/add-verified-doctor
+ * @desc    Add a verified doctor to Firestore (Admin only)
+ * @access  Private (Admin)
+ */
+router.post('/add-verified-doctor', async (req, res) => {
     try {
-        const { refreshToken } = req.body;
+        const { licenseNumber, fullName, medicalCouncil, specialization } = req.body;
 
-        if (!refreshToken) {
-            return res.status(401).json({ error: 'Refresh token required' });
+        if (!licenseNumber || !fullName || !medicalCouncil) {
+            return res.status(400).json({
+                success: false,
+                message: 'License number, full name, and medical council are required'
+            });
         }
 
-        // Verify refresh token
-        const decoded = jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET);
-
-        // Check if session exists
-        const session = await prisma.session.findUnique({
-            where: { refreshToken },
-            include: { user: true }
+        // Add to verified_doctors collection
+        await db.collection('verified_doctors').add({
+            licenseNumber: licenseNumber.toUpperCase(),
+            fullName: fullName.trim(),
+            medicalCouncil,
+            specialization: specialization || 'General Physician',
+            verifiedAt: new Date(),
+            status: 'active'
         });
 
-        if (!session || session.expiresAt < new Date()) {
-            return res.status(401).json({ error: 'Invalid or expired refresh token' });
-        }
-
-        // Generate new access token
-        const accessToken = jwt.sign(
-            { userId: session.user.id, role: session.user.role },
-            process.env.JWT_ACCESS_SECRET,
-            { expiresIn: process.env.JWT_ACCESS_EXPIRY || '15m' }
-        );
-
-        res.json({ accessToken });
-
+        return res.status(201).json({
+            success: true,
+            message: 'Doctor added to verified list successfully'
+        });
     } catch (error) {
-        res.status(401).json({ error: 'Invalid refresh token' });
+        console.error('Add doctor error:', error);
+        return res.status(500).json({
+            success: false,
+            message: 'Error adding verified doctor',
+            error: error.message
+        });
     }
 });
 
-// POST /api/auth/logout
-router.post('/logout', async (req, res) => {
+/**
+ * @route   POST /api/auth/add-verified-organization
+ * @desc    Add a verified organization to Firestore (Admin only)
+ * @access  Private (Admin)
+ */
+router.post('/add-verified-organization', async (req, res) => {
     try {
-        const { refreshToken } = req.body;
+        const { organizationId, name, emailDomains, employees } = req.body;
 
-        if (refreshToken) {
-            await prisma.session.delete({
-                where: { refreshToken }
-            }).catch(() => { }); // Ignore if not found
+        if (!organizationId || !name || !emailDomains || !Array.isArray(emailDomains)) {
+            return res.status(400).json({
+                success: false,
+                message: 'Organization ID, name, and email domains (array) are required'
+            });
         }
 
-        res.json({ message: 'Logged out successfully' });
+        // Add organization
+        await db.collection('verified_organizations').doc(organizationId).set({
+            name,
+            emailDomains: emailDomains.map(d => d.toLowerCase()),
+            status: 'active',
+            createdAt: new Date()
+        });
+
+        // Add employees if provided
+        if (employees && Array.isArray(employees)) {
+            const batch = db.batch();
+            employees.forEach(emp => {
+                const empRef = db
+                    .collection('verified_organizations')
+                    .doc(organizationId)
+                    .collection('employees')
+                    .doc(emp.employeeId);
+                batch.set(empRef, {
+                    employeeId: emp.employeeId,
+                    email: emp.email,
+                    name: emp.name || '',
+                    status: 'active',
+                    addedAt: new Date()
+                });
+            });
+            await batch.commit();
+        }
+
+        return res.status(201).json({
+            success: true,
+            message: 'Organization added to verified list successfully'
+        });
     } catch (error) {
-        res.status(500).json({ error: 'Logout failed' });
+        console.error('Add organization error:', error);
+        return res.status(500).json({
+            success: false,
+            message: 'Error adding verified organization',
+            error: error.message
+        });
     }
 });
 

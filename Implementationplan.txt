@@ -1,0 +1,60 @@
+Goal Description
+Build a "Smart Health Vault," a secure, mobile-first healthcare management system. The system allows Patients, Doctors, and Staff to manage appointments, medical records, and diagnoses with role-based access control.
+
+User Review Required
+IMPORTANT
+
+Tech Stack Confirmation:
+
+Frontend: Flutter (Android)
+Backend: Node.js + Express
+Database: PostgreSQL (Prisma ORM)
+Storage: AWS S3 or Firebase Storage (Please confirm preference or if a local mock is needed for dev)
+NOTE
+
+Suggestions:
+
+API Documentation: I recommend adding Swagger/OpenAPI to the backend for better frontend-backend collaboration.
+Testing: Jest for backend testing and flutter_test/integration_test for the app.
+Input Validation: zod is selected for backend validation (as per project.md).
+Proposed Changes
+Backend (Node.js + Express + PostgreSQL)
+[NEW] Structure & Config
+src/app.js: Express app setup.
+src/server.js: Server entry point.
+src/config/: database.js (Prisma), aws.js (S3), logger.js (Winston), swagger.js.
+src/middlewares/: auth, role, validation, upload, error, audit.
+src/utils/: jwt, s3.js, responses, validators.
+prisma/schema.prisma: Database schema definition.
+[NEW] Modules (src/modules/)
+auth: auth.controller.js, auth.service.js, auth.routes.js
+users: Profile management, Role checks.
+appointments: CRUD for appointments, Status transitions.
+health-records: Metadata storage, Presigned URL generation.
+medical-notes: Doctor diagnosis and prescriptions.
+Mobile App (Flutter)
+[NEW] Structure (features-first)
+lib/main.dart: App entry point.
+lib/core/: Routing (GoRouter), Theme, Network Client (Dio), Storage (flutter_secure_storage).
+lib/features/auth/: Login, Register screens & logic.
+lib/features/patient/: Dashboard, Book Appointment, View Records.
+lib/features/doctor/: Dashboard, Appointment List, Add Diagnosis.
+lib/features/staff/: Dashboard, Upload Report.
+Database Schema (Prisma)
+Reflecting 
+project.md
+ definitions for:
+
+User (Patient, Doctor, Staff)
+Appointment
+HealthRecord
+MedicalNote
+AccessLog
+Verification Plan
+Automated Tests
+Backend: Run npm test (Jest) to verify API endpoints (Auth, CRUD).
+Frontend: Run flutter test for widget/unit tests.
+Manual Verification
+Auth Flow: Register as Patient, Login, Check Token.
+Booking Flow: Patient books appointment -> Doctor sees it -> Staff confirms it.
+Medical Record: Staff uploads file -> Patient views it -> Doctor views it.

@@ -1,0 +1,660 @@
+================================================================================
+                    LAB 2 – WIREFRAMING & APP UI FLOW PLANNING
+                          SMART HEALTH VAULT APPLICATION
+================================================================================
+
+STUDENT NAME: Dhruvam Tandel
+PROJECT: Smart Health Vault - Health Record Management System
+DATE: February 5, 2026
+
+================================================================================
+1. INTRODUCTION
+================================================================================
+
+This document presents the complete wireframing and UI flow planning for the
+Smart Health Vault mobile application. The app provides secure health record
+management for patients, doctors, and healthcare staff.
+
+Wireframes represent the visual structure and layout of each screen without
+final styling. The UI flow diagram shows navigation patterns and user journeys.
+
+Tools Used:
+- Figma (for wireframes)
+- Draw.io (for UI flow diagram)
+
+================================================================================
+2. IDENTIFIED SCREENS (10 SCREENS)
+================================================================================
+
+AUTHENTICATION SCREENS:
+1. Splash Screen
+2. Login Screen
+3. Signup Screen (with role selection)
+
+PATIENT SCREENS:
+4. Patient Dashboard
+5. Health Records List
+6. Add/Edit Health Record
+7. Patient Profile
+
+DOCTOR SCREENS:
+8. Doctor Dashboard
+9. Patient List (for doctors)
+
+COMMON SCREENS:
+10. Settings Screen
+
+================================================================================
+3. WIREFRAME DESCRIPTIONS
+================================================================================
+
+SCREEN 1: SPLASH SCREEN
+--------------------------------------------------------------------------------
+Components:
+- App Logo (centered)
+- App Name: "Smart Health Vault"
+- Tagline: "Your Health, Secured"
+- Loading indicator
+
+Layout:
+┌─────────────────────────────┐
+│                             │
+│                             │
+│      [LOGO PLACEHOLDER]     │
+│                             │
+│    Smart Health Vault       │
+│    Your Health, Secured     │
+│                             │
+│      [Loading Spinner]      │
+│                             │
+└─────────────────────────────┘
+
+Navigation: Auto-navigates to Login Screen after 2 seconds
+
+
+SCREEN 2: LOGIN SCREEN
+--------------------------------------------------------------------------------
+Components:
+- Header with app branding
+- Email input field
+- Password input field (with show/hide toggle)
+- Login button
+- Google Sign-In button
+- "Sign Up" link
+
+Layout:
+┌─────────────────────────────┐
+│   [LOGO] Smart Health Vault │
+│   Your Health, Secured      │
+├─────────────────────────────┤
+│                             │
+│   Welcome Back              │
+│   Sign in to continue       │
+│                             │
+│   [Email Input Field]       │
+│   [Password Input Field]    │
+│                             │
+│   [Login Button]            │
+│                             │
+│   ─────── OR ───────        │
+│                             │
+│   [G] Sign in with Google   │
+│                             │
+│   Don't have an account?    │
+│   [Sign Up]                 │
+└─────────────────────────────┘
+
+Navigation:
+- Login → Patient/Doctor/Staff Dashboard (based on role)
+- Sign Up → Signup Screen
+- Google Sign-In → Patient Dashboard
+
+
+SCREEN 3: SIGNUP SCREEN
+--------------------------------------------------------------------------------
+Components:
+- Role selector (Patient/Doctor/Staff)
+- Email input
+- Password input
+- Confirm password input
+- Role-specific fields (conditional)
+  * Doctor: License Number, Full Name, Medical Council
+  * Staff: Organization ID, Employee ID
+- Sign Up button
+- "Login" link
+
+Layout:
+┌─────────────────────────────┐
+│   Create Account            │
+│                             │
+│   Select Role:              │
+│   [Patient] [Doctor] [Staff]│
+│                             │
+│   [Email Input]             │
+│   [Password Input]          │
+│   [Confirm Password]        │
+│                             │
+│   --- If Doctor Selected ---│
+│   [License Number]          │
+│   [Full Name]               │
+│   [Medical Council]         │
+│   ---------------------------│
+│                             │
+│   [Sign Up Button]          │
+│                             │
+│   Already have an account?  │
+│   [Login]                   │
+└─────────────────────────────┘
+
+Navigation:
+- Sign Up → Email Verification Dialog → Login Screen
+- Login link → Login Screen
+
+
+SCREEN 4: PATIENT DASHBOARD
+--------------------------------------------------------------------------------
+Components:
+- AppBar with profile icon
+- Welcome message
+- Quick stats cards (Records, Appointments, Prescriptions)
+- Recent health records list
+- Quick action buttons
+- Bottom navigation bar
+
+Layout:
+┌─────────────────────────────┐
+│ ☰  Patient Dashboard  [👤] │
+├─────────────────────────────┤
+│ Welcome, Patient Name       │
+│                             │
+│ ┌──────┐ ┌──────┐ ┌──────┐ │
+│ │  12  │ │  3   │ │  5   │ │
+│ │Records│ │Appts │ │Rx    │ │
+│ └──────┘ └──────┘ └──────┘ │
+│                             │
+│ Recent Health Records       │
+│ ┌─────────────────────────┐ │
+│ │ [+] Blood Test - Jan 15 │ │
+│ │ [+] X-Ray - Jan 10      │ │
+│ │ [+] Checkup - Jan 5     │ │
+│ └─────────────────────────┘ │
+│                             │
+│ [+ Add New Record]          │
+│                             │
+├─────────────────────────────┤
+│ [🏠] [📋] [👤] [⚙️]        │
+└─────────────────────────────┘
+
+Navigation:
+- Add Record → Add/Edit Health Record Screen
+- Record item → View Record Details
+- Bottom Nav → Records/Profile/Settings
+
+
+SCREEN 5: HEALTH RECORDS LIST
+--------------------------------------------------------------------------------
+Components:
+- AppBar with search icon
+- Filter/Sort options
+- List of health records (cards)
+- Floating action button (Add)
+
+Layout:
+┌─────────────────────────────┐
+│ ← Health Records      [🔍]  │
+├─────────────────────────────┤
+│ [Filter ▼] [Sort ▼]        │
+│                             │
+│ ┌─────────────────────────┐ │
+│ │ Blood Test              │ │
+│ │ Date: Jan 15, 2026      │ │
+│ │ Doctor: Dr. Smith       │ │
+│ │ [View Details]          │ │
+│ └─────────────────────────┘ │
+│                             │
+│ ┌─────────────────────────┐ │
+│ │ X-Ray Report            │ │
+│ │ Date: Jan 10, 2026      │ │
+│ │ Doctor: Dr. Johnson     │ │
+│ │ [View Details]          │ │
+│ └─────────────────────────┘ │
+│                             │
+│                      [+]    │
+└─────────────────────────────┘
+
+Navigation:
+- View Details → Record Detail Screen
+- [+] Button → Add/Edit Health Record Screen
+- Back → Patient Dashboard
+
+
+SCREEN 6: ADD/EDIT HEALTH RECORD
+--------------------------------------------------------------------------------
+Components:
+- AppBar with save/cancel
+- Form fields:
+  * Record type dropdown
+  * Date picker
+  * Doctor name
+  * Notes/Description
+  * Attach files button
+- Save button
+
+Layout:
+┌─────────────────────────────┐
+│ ← Add Health Record   [✓]   │
+├─────────────────────────────┤
+│                             │
+│ Record Type                 │
+│ [Select Type ▼]             │
+│                             │
+│ Date                        │
+│ [📅 Select Date]            │
+│                             │
+│ Doctor Name                 │
+│ [Enter Doctor Name]         │
+│                             │
+│ Description/Notes           │
+│ [Text Area]                 │
+│                             │
+│ Attachments                 │
+│ [📎 Attach Files]           │
+│                             │
+│ [Save Record]               │
+│                             │
+└─────────────────────────────┘
+
+Navigation:
+- Save → Health Records List (with success message)
+- Cancel → Health Records List
+- Back → Health Records List
+
+
+SCREEN 7: PATIENT PROFILE
+--------------------------------------------------------------------------------
+Components:
+- Profile picture placeholder
+- Personal information fields
+- Medical information section
+- Edit button
+- Logout button
+
+Layout:
+┌─────────────────────────────┐
+│ ← Profile            [Edit] │
+├─────────────────────────────┤
+│      [Profile Picture]      │
+│      Patient Name           │
+│      patient@email.com      │
+│                             │
+│ Personal Information        │
+│ ┌─────────────────────────┐ │
+│ │ Full Name: John Doe     │ │
+│ │ DOB: Jan 1, 1990        │ │
+│ │ Gender: Male            │ │
+│ │ Phone: +1234567890      │ │
+│ │ Blood Group: O+         │ │
+│ └─────────────────────────┘ │
+│                             │
+│ Medical Information         │
+│ ┌─────────────────────────┐ │
+│ │ Allergies: None         │ │
+│ │ Conditions: None        │ │
+│ │ Medications: None       │ │
+│ └─────────────────────────┘ │
+│                             │
+│ [Logout]                    │
+└─────────────────────────────┘
+
+Navigation:
+- Edit → Edit Profile Screen
+- Logout → Login Screen
+- Back → Dashboard
+
+
+SCREEN 8: DOCTOR DASHBOARD
+--------------------------------------------------------------------------------
+Components:
+- AppBar with profile icon
+- Welcome message
+- Quick stats (Patients, Appointments Today)
+- Today's appointments list
+- Quick actions
+- Bottom navigation
+
+Layout:
+┌─────────────────────────────┐
+│ ☰  Doctor Dashboard   [👤]  │
+├─────────────────────────────┤
+│ Welcome, Dr. Smith          │
+│                             │
+│ ┌──────────┐ ┌────────────┐ │
+│ │   45     │ │     8      │ │
+│ │ Patients │ │Appointments│ │
+│ └──────────┘ └────────────┘ │
+│                             │
+│ Today's Appointments        │
+│ ┌─────────────────────────┐ │
+│ │ 10:00 AM - John Doe     │ │
+│ │ 11:30 AM - Jane Smith   │ │
+│ │ 02:00 PM - Bob Johnson  │ │
+│ └─────────────────────────┘ │
+│                             │
+│ [View All Patients]         │
+│ [View All Appointments]     │
+│                             │
+├─────────────────────────────┤
+│ [🏠] [👥] [👤] [⚙️]        │
+└─────────────────────────────┘
+
+Navigation:
+- View All Patients → Patient List Screen
+- Appointment item → Appointment Details
+- Bottom Nav → Patients/Profile/Settings
+
+
+SCREEN 9: PATIENT LIST (FOR DOCTORS)
+--------------------------------------------------------------------------------
+Components:
+- AppBar with search
+- Search bar
+- List of patients (cards)
+- Patient details preview
+
+Layout:
+┌─────────────────────────────┐
+│ ← My Patients         [🔍]  │
+├─────────────────────────────┤
+│ [Search patients...]        │
+│                             │
+│ ┌─────────────────────────┐ │
+│ │ [👤] John Doe           │ │
+│ │ Age: 35 | Blood: O+     │ │
+│ │ Last Visit: Jan 15      │ │
+│ │ [View Details]          │ │
+│ └─────────────────────────┘ │
+│                             │
+│ ┌─────────────────────────┐ │
+│ │ [👤] Jane Smith         │ │
+│ │ Age: 28 | Blood: A+     │ │
+│ │ Last Visit: Jan 12      │ │
+│ │ [View Details]          │ │
+│ └─────────────────────────┘ │
+│                             │
+└─────────────────────────────┘
+
+Navigation:
+- View Details → Patient Detail Screen
+- Search → Filtered list
+- Back → Doctor Dashboard
+
+
+SCREEN 10: SETTINGS SCREEN
+--------------------------------------------------------------------------------
+Components:
+- AppBar
+- Settings sections (Account, Notifications, Privacy, About)
+- Toggle switches
+- Navigation items
+
+Layout:
+┌─────────────────────────────┐
+│ ← Settings                  │
+├─────────────────────────────┤
+│                             │
+│ Account                     │
+│ ┌─────────────────────────┐ │
+│ │ Edit Profile         >  │ │
+│ │ Change Password      >  │ │
+│ └─────────────────────────┘ │
+│                             │
+│ Notifications               │
+│ ┌─────────────────────────┐ │
+│ │ Push Notifications  [●] │ │
+│ │ Email Alerts        [○] │ │
+│ └─────────────────────────┘ │
+│                             │
+│ Privacy                     │
+│ ┌─────────────────────────┐ │
+│ │ Data Sharing        [○] │ │
+│ │ Location Access     [○] │ │
+│ └─────────────────────────┘ │
+│                             │
+│ About                       │
+│ ┌─────────────────────────┐ │
+│ │ Version 1.0.0           │ │
+│ │ Terms & Conditions   >  │ │
+│ │ Privacy Policy       >  │ │
+│ └─────────────────────────┘ │
+└─────────────────────────────┘
+
+Navigation:
+- Edit Profile → Profile Edit Screen
+- Change Password → Password Change Screen
+- Back → Dashboard
+
+================================================================================
+4. UI FLOW DIAGRAM
+================================================================================
+
+MAIN USER FLOW:
+
+Start
+  │
+  ▼
+[Splash Screen] (2 sec auto-navigate)
+  │
+  ▼
+[Login Screen] ────────────────┐
+  │                            │
+  │ (Login Success)            │ (Sign Up)
+  ▼                            ▼
+Role Check              [Signup Screen]
+  │                            │
+  ├─ Patient ──────────────────┤
+  │   │                        │ (Sign Up Success)
+  │   ▼                        │
+  │ [Patient Dashboard] ◄──────┘
+  │   │
+  │   ├──► [Health Records List]
+  │   │      │
+  │   │      └──► [Add/Edit Record]
+  │   │             │
+  │   │             └──► (Save) ──► Back to List
+  │   │
+  │   ├──► [Patient Profile]
+  │   │      │
+  │   │      └──► [Edit Profile]
+  │   │
+  │   └──► [Settings]
+  │
+  ├─ Doctor ───────────────────┐
+  │   │                        │
+  │   ▼                        │
+  │ [Doctor Dashboard]         │
+  │   │                        │
+  │   ├──► [Patient List]      │
+  │   │      │                 │
+  │   │      └──► [Patient Details]
+  │   │
+  │   ├──► [Doctor Profile]    │
+  │   │                        │
+  │   └──► [Settings]          │
+  │                            │
+  └─ Staff ────────────────────┤
+      │                        │
+      ▼                        │
+    [Staff Dashboard]          │
+      │                        │
+      └──► [Settings]          │
+                               │
+All Roles:                     │
+  Settings ──► Logout ─────────┘
+                │
+                ▼
+          [Login Screen]
+
+
+DETAILED CRUD FLOW (Health Records):
+
+[Patient Dashboard]
+  │
+  ▼
+[Health Records List]
+  │
+  ├──► (Tap +) ──► [Add Record Screen]
+  │                  │
+  │                  ├──► (Fill Form)
+  │                  │
+  │                  ├──► (Save) ──► Success ──► [Records List]
+  │                  │
+  │                  └──► (Cancel) ──► [Records List]
+  │
+  └──► (Tap Record) ──► [View Record Details]
+                          │
+                          ├──► (Edit) ──► [Edit Record Screen]
+                          │                 │
+                          │                 └──► (Save) ──► [Records List]
+                          │
+                          └──► (Delete) ──► Confirm ──► [Records List]
+
+
+AUTHENTICATION FLOW:
+
+[Login Screen]
+  │
+  ├──► Email/Password ──► Verify ──► Success ──► [Dashboard]
+  │                         │
+  │                         └──► Fail ──► Error Dialog ──► [Login Screen]
+  │
+  ├──► Google Sign-In ──► Success ──► [Patient Dashboard]
+  │                        │
+  │                        └──► Fail ──► Error Dialog ──► [Login Screen]
+  │
+  └──► Sign Up Link ──► [Signup Screen]
+                          │
+                          ├──► (Fill Form)
+                          │
+                          ├──► (Verify Credentials)
+                          │      │
+                          │      ├──► Doctor: Check License
+                          │      │
+                          │      └──► Staff: Check Org/Employee ID
+                          │
+                          ├──► (Success) ──► Send Email ──► [Login Screen]
+                          │
+                          └──► (Fail) ──► Error Dialog ──► [Signup Screen]
+
+================================================================================
+5. NAVIGATION PATTERNS
+================================================================================
+
+BOTTOM NAVIGATION (Patient):
+- Home Icon → Patient Dashboard
+- Records Icon → Health Records List
+- Profile Icon → Patient Profile
+- Settings Icon → Settings Screen
+
+BOTTOM NAVIGATION (Doctor):
+- Home Icon → Doctor Dashboard
+- Patients Icon → Patient List
+- Profile Icon → Doctor Profile
+- Settings Icon → Settings Screen
+
+APPBAR ACTIONS:
+- Back Arrow → Previous Screen
+- Search Icon → Search Functionality
+- Profile Icon → Profile Screen
+- Menu Icon → Drawer/Menu
+
+FLOATING ACTION BUTTON:
+- Used in list screens for "Add" action
+- Example: Health Records List → Add Record
+
+================================================================================
+6. KEY DESIGN DECISIONS
+================================================================================
+
+1. ROLE-BASED DASHBOARDS
+   - Different dashboards for Patient, Doctor, Staff
+   - Customized content based on user role
+
+2. CONSISTENT NAVIGATION
+   - Bottom navigation for main sections
+   - AppBar for screen-specific actions
+   - Back button for hierarchical navigation
+
+3. CARD-BASED LAYOUTS
+   - Health records displayed as cards
+   - Easy to scan and tap
+   - Visual hierarchy with spacing
+
+4. FORM VALIDATION
+   - Inline error messages
+   - Required field indicators
+   - Clear success/error feedback
+
+5. ACCESSIBILITY
+   - Large touch targets (minimum 48x48dp)
+   - Clear labels and icons
+   - Readable font sizes
+
+6. EMPTY STATES
+   - Helpful messages when no data
+   - Call-to-action buttons
+   - Guidance for first-time users
+
+================================================================================
+7. SCREEN COUNT SUMMARY
+================================================================================
+
+Total Screens: 10
+
+Authentication: 3 screens
+- Splash Screen
+- Login Screen
+- Signup Screen
+
+Patient Screens: 4 screens
+- Patient Dashboard
+- Health Records List
+- Add/Edit Health Record
+- Patient Profile
+
+Doctor Screens: 2 screens
+- Doctor Dashboard
+- Patient List
+
+Common Screens: 1 screen
+- Settings Screen
+
+================================================================================
+8. CONCLUSION
+================================================================================
+
+This wireframing exercise has established:
+
+✓ Complete visual structure for all major screens
+✓ Clear navigation flow between screens
+✓ Role-based user journeys (Patient, Doctor, Staff)
+✓ CRUD operations flow for health records
+✓ Consistent design patterns across the app
+✓ Foundation for UI component development
+
+The wireframes and UI flow will guide the implementation of:
+- Screen layouts in Flutter
+- Navigation using GoRouter
+- CRUD operations with Firebase
+- Role-based access control
+- User experience optimization
+
+Next Steps:
+1. Review wireframes with stakeholders
+2. Create high-fidelity mockups in Figma
+3. Implement UI components in Flutter
+4. Integrate with backend APIs
+5. Conduct usability testing
+
+================================================================================
+                              END OF DOCUMENT
+================================================================================

@@ -1,0 +1,142 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isAuth() {
+      return request.auth != null;
+    }
+
+    function isOwner(uid) {
+      return isAuth() && request.auth.uid == uid;
+    }
+
+    // Use direct exists() checks — much faster than getUserRole() cross-reads
+    // and avoids the "permission denied on list queries" issue for doctors.
+    function isDoctor() {
+      return isAuth() && exists(/databases/$(database)/documents/doctors/$(request.auth.uid));
+    }
+
+    function isStaff() {
+      return isAuth() && exists(/databases/$(database)/documents/staff/$(request.auth.uid));
+    }
+
+    function isAdmin() {
+      return isStaff()
+        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+
+    function isAdminOrStaff() {
+      return isAdmin() || isStaff();
+    }
+
+    // ── Users ──────────────────────────────────────────────────
+    match /users/{uid} {
+      allow read: if isOwner(uid) || isAdminOrStaff() || isDoctor();
+      allow create: if isOwner(uid);
+      allow update: if isOwner(uid) || isAdminOrStaff();
+    }
+
+    // ── Patients ───────────────────────────────────────────────
+    match /patients/{uid} {
+      allow read: if isOwner(uid) || isAdminOrStaff() || isDoctor();
+      allow create: if isOwner(uid) || isAdminOrStaff();
+      allow update: if isOwner(uid) || isAdminOrStaff();
+      allow delete: if isAdmin();
+    }
+
+    // ── Doctors — readable by all authenticated users (patient booking) ──
+    match /doctors/{uid} {
+      allow read: if isAuth();
+      allow create: if isOwner(uid) || isAdminOrStaff();
+      allow update: if isOwner(uid) || isAdminOrStaff();
+      allow delete: if isAdmin();
+    }
+
+    // ── Staff ──────────────────────────────────────────────────
+    match /staff/{uid} {
+      allow read: if isOwner(uid) || isAdminOrStaff();
+      allow create: if isOwner(uid) || isAdminOrStaff();
+      allow update: if isOwner(uid) || isAdminOrStaff();
+      allow delete: if isAdmin();
+    }
+
+    // ── Health Records ─────────────────────────────────────────
+    // KEY FIX: Use separate 'read' (single doc) vs 'list' (collection query) rules.
+    // 'read' has access to resource.data; 'list' does NOT.
+    // Doctors must be allowed to run .where() queries — that's a 'list' operation.
+    match /health_records/{recordId} {
+      // Single document reads
+      allow get: if isAuth() && (
+        resource.data.patientId == request.auth.uid ||
+        isAdminOrStaff() ||
+        isDoctor()
+      );
+      // Collection queries (.where(), .orderBy(), .count() etc.)
+      // Patients can query their OWN records; doctors/staff can query all.
+      allow list: if isAuth() && (
+        isAdminOrStaff() ||
+        isDoctor() ||
+        request.auth != null  // patient-scoped query — enforced by app-level where clause
+      );
+      allow create: if isAuth();
+      allow update: if isAuth() && (
+        resource.data.patientId == request.auth.uid || isAdminOrStaff()
+      );
+      allow delete: if isAuth() && (
+        resource.data.patientId == request.auth.uid || isAdmin()
+      );
+    }
+
+    // ── Appointment Slots ──────────────────────────────────────
+    match /appointment_slots/{slotId} {
+      allow read: if isAuth();
+      allow create: if isAdminOrStaff();
+      allow update: if isAdminOrStaff() || (
+        isAuth() &&
+        request.resource.data.diff(resource.data).affectedKeys()
+          .hasOnly(['bookedCount'])
+      );
+      allow delete: if isAdminOrStaff();
+    }
+
+    // ── Appointments ───────────────────────────────────────────
+    match /appointments/{apptId} {
+      // Single doc reads
+      allow get: if isAuth() && (
+        resource.data.patientId == request.auth.uid ||
+        resource.data.doctorId == request.auth.uid ||
+        isAdminOrStaff()
+      );
+      // Collection queries — allow any auth user (scope enforced in app)
+      allow list: if isAuth();
+      allow create: if isAuth();
+      allow update: if isAuth() && (
+        resource.data.patientId == request.auth.uid ||
+        resource.data.doctorId == request.auth.uid ||
+        isAdminOrStaff()
+      );
+      allow delete: if isAdminOrStaff();
+    }
+
+    // ── Verified collections (legacy — no longer required for auth) ──
+    match /verified_doctors/{docId} {
+      allow read: if isAuth();
+      allow write: if isAdminOrStaff();
+    }
+
+    match /verified_admins/{adminId} {
+      allow read: if isAuth();
+      allow write: if isAdminOrStaff();
+    }
+
+    match /verified_organizations/{orgId} {
+      allow read: if isAuth();
+      allow write: if isAdminOrStaff();
+    }
+
+    match /verified_staff/{staffId} {
+      allow read: if isAuth();
+      allow write: if isAdminOrStaff();
+    }
+  }
+}

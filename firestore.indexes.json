@@ -1,0 +1,169 @@
+{
+    "indexes": [
+        {
+            "collectionGroup": "appointments",
+            "queryScope": "COLLECTION",
+            "fields": [
+                {
+                    "fieldPath": "patientId",
+                    "order": "ASCENDING"
+                },
+                {
+                    "fieldPath": "appointmentDate",
+                    "order": "DESCENDING"
+                }
+            ]
+        },
+        {
+            "collectionGroup": "appointments",
+            "queryScope": "COLLECTION",
+            "fields": [
+                {
+                    "fieldPath": "status",
+                    "order": "ASCENDING"
+                },
+                {
+                    "fieldPath": "createdAt",
+                    "order": "DESCENDING"
+                }
+            ]
+        },
+        {
+            "collectionGroup": "appointments",
+            "queryScope": "COLLECTION",
+            "fields": [
+                {
+                    "fieldPath": "doctorId",
+                    "order": "ASCENDING"
+                },
+                {
+                    "fieldPath": "status",
+                    "order": "ASCENDING"
+                },
+                {
+                    "fieldPath": "appointmentDate",
+                    "order": "ASCENDING"
+                }
+            ]
+        },
+        {
+            "collectionGroup": "appointments",
+            "queryScope": "COLLECTION",
+            "fields": [
+                {
+                    "fieldPath": "doctorId",
+                    "order": "ASCENDING"
+                },
+                {
+                    "fieldPath": "appointmentDate",
+                    "order": "DESCENDING"
+                }
+            ]
+        },
+        {
+            "collectionGroup": "appointment_slots",
+            "queryScope": "COLLECTION",
+            "fields": [
+                {
+                    "fieldPath": "doctorId",
+                    "order": "ASCENDING"
+                },
+                {
+                    "fieldPath": "isActive",
+                    "order": "ASCENDING"
+                },
+                {
+                    "fieldPath": "date",
+                    "order": "ASCENDING"
+                }
+            ]
+        },
+        {
+            "collectionGroup": "appointment_slots",
+            "queryScope": "COLLECTION",
+            "fields": [
+                {
+                    "fieldPath": "doctorId",
+                    "order": "ASCENDING"
+                },
+                {
+                    "fieldPath": "date",
+                    "order": "ASCENDING"
+                },
+                {
+                    "fieldPath": "startTime",
+                    "order": "ASCENDING"
+                }
+            ]
+        },
+        {
+            "collectionGroup": "health_records",
+            "queryScope": "COLLECTION",
+            "fields": [
+                {
+                    "fieldPath": "patientId",
+                    "order": "ASCENDING"
+                },
+                {
+                    "fieldPath": "recordType",
+                    "order": "ASCENDING"
+                },
+                {
+                    "fieldPath": "date",
+                    "order": "DESCENDING"
+                }
+            ]
+        },
+        {
+            "collectionGroup": "health_records",
+            "queryScope": "COLLECTION",
+            "fields": [
+                {
+                    "fieldPath": "patientId",
+                    "order": "ASCENDING"
+                },
+                {
+                    "fieldPath": "date",
+                    "order": "DESCENDING"
+                }
+            ]
+        },
+        {
+            "collectionGroup": "health_records",
+            "queryScope": "COLLECTION",
+            "fields": [
+                {
+                    "fieldPath": "patientId",
+                    "order": "ASCENDING"
+                },
+                {
+                    "fieldPath": "category",
+                    "order": "ASCENDING"
+                },
+                {
+                    "fieldPath": "date",
+                    "order": "DESCENDING"
+                }
+            ]
+        },
+        {
+            "collectionGroup": "health_records",
+            "queryScope": "COLLECTION",
+            "fields": [
+                {
+                    "fieldPath": "patientId",
+                    "order": "ASCENDING"
+                },
+                {
+                    "fieldPath": "addedByRole",
+                    "order": "ASCENDING"
+                },
+                {
+                    "fieldPath": "date",
+                    "order": "DESCENDING"
+                }
+            ]
+        }
+    ],
+    "fieldOverrides": []
+}

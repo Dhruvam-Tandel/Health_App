@@ -1,0 +1,73 @@
+{
+    "indexes": [
+        {
+            "collectionGroup": "health_records",
+            "queryScope": "COLLECTION",
+            "fields": [
+                {
+                    "fieldPath": "patientId",
+                    "order": "ASCENDING"
+                },
+                {
+                    "fieldPath": "date",
+                    "order": "DESCENDING"
+                }
+            ]
+        },
+        {
+            "collectionGroup": "health_records",
+            "queryScope": "COLLECTION",
+            "fields": [
+                {
+                    "fieldPath": "patientId",
+                    "order": "ASCENDING"
+                },
+                {
+                    "fieldPath": "category",
+                    "order": "ASCENDING"
+                },
+                {
+                    "fieldPath": "date",
+                    "order": "DESCENDING"
+                }
+            ]
+        },
+        {
+            "collectionGroup": "health_records",
+            "queryScope": "COLLECTION",
+            "fields": [
+                {
+                    "fieldPath": "patientId",
+                    "order": "ASCENDING"
+                },
+                {
+                    "fieldPath": "recordType",
+                    "order": "ASCENDING"
+                },
+                {
+                    "fieldPath": "date",
+                    "order": "DESCENDING"
+                }
+            ]
+        },
+        {
+            "collectionGroup": "health_records",
+            "queryScope": "COLLECTION",
+            "fields": [
+                {
+                    "fieldPath": "patientId",
+                    "order": "ASCENDING"
+                },
+                {
+                    "fieldPath": "addedByRole",
+                    "order": "ASCENDING"
+                },
+                {
+                    "fieldPath": "date",
+                    "order": "DESCENDING"
+                }
+            ]
+        }
+    ],
+    "fieldOverrides": []
+}

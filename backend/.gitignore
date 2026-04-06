@@ -1,0 +1,17 @@
+# Node
+node_modules/
+npm-debug.log*
+
+# Environment
+.env
+.env.*
+
+# Secrets / Config
+*.key
+*.pem
+firebase-service-account.json
+credentials.json
+
+# Builds
+dist/
+build/

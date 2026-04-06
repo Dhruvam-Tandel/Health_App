@@ -1,16 +1,34 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:provider/provider.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart'; // Added
+import 'features/notifications/services/notification_service.dart';
 
 import 'features/auth/services/auth_service.dart';
 import 'features/auth/screens/login_screen.dart';
 import 'features/auth/screens/signup_screen.dart';
+import 'features/dashboard/screens/patient_dashboard.dart';
+import 'features/dashboard/screens/doctor_dashboard.dart';
+import 'features/dashboard/screens/staff_dashboard.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  
+  // Load environment variables
+  await dotenv.load(fileName: ".env");
+
   await Firebase.initializeApp();
+
+  // Register FCM background message handler
+  FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
+
+  // Initialize notification service
+  await NotificationService().initialize();
+
   runApp(const MyApp());
 }
 
@@ -27,7 +45,7 @@ class MyApp extends StatelessWidget {
         title: 'Smart Health Vault',
         debugShowCheckedModeBanner: false,
         theme: _buildTheme(),
-        routerConfig: _router,
+        routerConfig: _buildRouter(),
       ),
     );
   }
@@ -118,82 +136,39 @@ class MyApp extends StatelessWidget {
   }
 }
 
-// Router Configuration
-final GoRouter _router = GoRouter(
-  initialLocation: '/login',
-  routes: [
-    GoRoute(
-      path: '/login',
-      builder: (context, state) => const LoginScreen(),
-    ),
-    GoRoute(
-      path: '/signup',
-      builder: (context, state) => const SignupScreen(),
-    ),
-    GoRoute(
-      path: '/patient-dashboard',
-      builder: (context, state) => const PlaceholderDashboard(role: 'Patient'),
-    ),
-    GoRoute(
-      path: '/doctor-dashboard',
-      builder: (context, state) => const PlaceholderDashboard(role: 'Doctor'),
-    ),
-    GoRoute(
-      path: '/staff-dashboard',
-      builder: (context, state) => const PlaceholderDashboard(role: 'Staff'),
-    ),
-  ],
-);
-
-// Placeholder Dashboard (to be replaced with actual dashboards)
-class PlaceholderDashboard extends StatelessWidget {
-  final String role;
-
-  const PlaceholderDashboard({super.key, required this.role});
-
-  @override
-  Widget build(BuildContext context) {
-    final authService = Provider.of<AuthService>(context, listen: false);
-
-    return Scaffold(
-      appBar: AppBar(
-        title: Text('$role Dashboard'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.logout),
-            onPressed: () async {
-              await authService.logout();
-              if (context.mounted) {
-                context.go('/login');
-              }
-            },
-          ),
-        ],
-      ),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.dashboard,
-              size: 100,
-              color: Theme.of(context).colorScheme.primary,
-            ),
-            const SizedBox(height: 24),
-            Text(
-              'Welcome to $role Dashboard',
-              style: Theme.of(context).textTheme.headlineMedium,
-            ),
-            const SizedBox(height: 16),
-            Text(
-              'Dashboard features coming soon...',
-              style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                    color: Colors.grey[600],
-                  ),
-            ),
-          ],
+// Router Configuration with auth redirect guard
+GoRouter _buildRouter() => GoRouter(
+      initialLocation: '/login',
+      redirect: (context, state) {
+        final isLoggedIn = FirebaseAuth.instance.currentUser != null;
+        final isAuthRoute = state.matchedLocation == '/login' ||
+            state.matchedLocation == '/signup';
+        if (!isLoggedIn && !isAuthRoute) return '/login';
+        if (isLoggedIn && isAuthRoute) {
+          return null; // let login handle post-auth nav
+        }
+        return null;
+      },
+      routes: [
+        GoRoute(
+          path: '/login',
+          builder: (context, state) => const LoginScreen(),
         ),
-      ),
+        GoRoute(
+          path: '/signup',
+          builder: (context, state) => const SignupScreen(),
+        ),
+        GoRoute(
+          path: '/patient-dashboard',
+          builder: (context, state) => const PatientDashboard(),
+        ),
+        GoRoute(
+          path: '/doctor-dashboard',
+          builder: (context, state) => const DoctorDashboard(),
+        ),
+        GoRoute(
+          path: '/staff-dashboard',
+          builder: (context, state) => const StaffDashboard(),
+        ),
+      ],
     );
-  }
-}

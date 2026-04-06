@@ -25,7 +25,3 @@ plugins {
 }
 
 include(":app")
-✅ ASCII wireframes for easy viewing
-✅ Detailed UI flow diagrams
-✅ Role-based navigation (Patient/Doctor/Staff)
-✅ CRUD operations flow
